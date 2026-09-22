@@ -8,21 +8,38 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: refresh-weather
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
       - name: Fetch Open-Meteo data
         run: |
+          set -euo pipefail
           mkdir -p data
-          curl -sS "https://api.open-meteo.com/v1/forecast?latitude=48.8566&longitude=2.3522&hourly=temperature_2m,apparent_temperature,precipitation_probability,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,sunrise,sunset&timezone=Europe%2FParis&forecast_days=6&models=meteofrance_seamless,ecmwf_ifs025,icon_seamless" -o data/latest.json
-          jq '. + {fetched_at: (now | todate)}' data/latest.json > data/tmp.json
-          mv data/tmp.json data/latest.json
+          curl -sS -f --retry 3 --retry-delay 5 --max-time 20 \
+            "https://api.open-meteo.com/v1/forecast?latitude=48.8566&longitude=2.3522&hourly=temperature_2m,apparent_temperature,precipitation_probability,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,sunrise,sunset&timezone=Europe%2FParis&forecast_days=6&models=meteofrance_seamless,ecmwf_ifs025,icon_seamless" \
+            -o data/fetched.json
+
+          # Validate it's well-formed JSON and actually contains forecast data
+          # before touching the committed file — a bad response must never overwrite good data.
+          if ! jq -e '.hourly.time and .daily.time' data/fetched.json > /dev/null 2>&1; then
+            echo "::error::Fetched JSON is invalid or missing expected fields — aborting without committing."
+            exit 1
+          fi
+
+          jq '. + {fetched_at: (now | todate)}' data/fetched.json > data/latest.json
+          rm -f data/fetched.json
 
       - name: Commit and push if changed
         run: |
+          set -euo pipefail
           git config user.name "weather-bot"
           git config user.email "actions@github.com"
           git add data/latest.json
