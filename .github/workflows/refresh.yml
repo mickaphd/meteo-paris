@@ -1,0 +1,30 @@
+name: Refresh weather data
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch Open-Meteo data
+        run: |
+          mkdir -p data
+          curl -sS "https://api.open-meteo.com/v1/forecast?latitude=48.8566&longitude=2.3522&hourly=temperature_2m,apparent_temperature,precipitation_probability,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,sunrise,sunset&timezone=Europe%2FParis&forecast_days=6&models=meteofrance_seamless,ecmwf_ifs025,icon_seamless" -o data/latest.json
+          jq '. + {fetched_at: (now | todate)}' data/latest.json > data/tmp.json
+          mv data/tmp.json data/latest.json
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "actions@github.com"
+          git add data/latest.json
+          git diff --staged --quiet || git commit -m "Update weather data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
