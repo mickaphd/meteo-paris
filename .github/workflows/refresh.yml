@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      FORECAST_URL: "https://api.open-meteo.com/v1/forecast?latitude=48.8566&longitude=2.3522&hourly=temperature_2m,apparent_temperature,precipitation_probability,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,sunrise,sunset&timezone=Europe%2FParis&forecast_days=8&models=meteofrance_seamless,ecmwf_ifs025,icon_seamless"
+      FORECAST_URL: "https://api.open-meteo.com/v1/forecast?latitude=48.8566&longitude=2.3522&hourly=temperature_2m,precipitation,precipitation_probability,weathercode&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weathercode,sunrise,sunset&timezone=Europe%2FParis&forecast_days=8&models=meteofrance_seamless,ecmwf_ifs025,icon_seamless"
     steps:
       - uses: actions/checkout@v4
 
