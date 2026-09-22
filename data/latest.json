@@ -1,7 +1,7 @@
 {
   "latitude": 48.86,
   "longitude": 2.3499994,
-  "generationtime_ms": 20.235061645507812,
+  "generationtime_ms": 70.5326795578003,
   "utc_offset_seconds": 7200,
   "timezone": "Europe/Paris",
   "timezone_abbreviation": "GMT+2",
@@ -2096,5 +2096,5 @@
       "2026-09-27T19:38"
     ]
   },
-  "fetched_at": "2026-09-22T13:38:02Z"
+  "fetched_at": "2026-09-22T14:19:03Z"
 }
